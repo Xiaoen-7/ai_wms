@@ -1,0 +1,22 @@
+{
+  "name": "jianan-wms-mobile",
+  "private": true,
+  "version": "0.4.9",
+  "type": "module",
+  "description": "简岸门店 WMS 移动端 Demo（Vue3 + Vite + Vant4 + Mock）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "vant": "^4.9.0",
+    "mockjs": "^1.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.2.0"
+  }
+}

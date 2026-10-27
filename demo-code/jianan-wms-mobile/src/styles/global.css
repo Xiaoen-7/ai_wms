@@ -1,0 +1,98 @@
+/* 显眼大按钮 + 大字号：响应 PRD「核心操作 ≤3 步、大字体大按钮、35 岁店员 1 小时上手」落地约束 */
+
+:root {
+  --wms-primary: #1989fa;
+  --wms-danger: #ee0a24;
+  --wms-success: #07c160;
+  --wms-text: #323233;
+  --wms-text-weak: #969799;
+  --wms-bg: #f7f8fa;
+  --wms-radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Helvetica,
+    'Microsoft YaHei', sans-serif;
+  color: var(--wms-text);
+  background: var(--wms-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 页面通用容器 */
+.page {
+  padding: 12px;
+}
+
+/* 卡片 */
+.card {
+  background: #fff;
+  border-radius: var(--wms-radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 大按钮：主操作区 */
+.big-btn {
+  height: 52px !important;
+  font-size: 17px !important;
+  font-weight: 600;
+  border-radius: var(--wms-radius) !important;
+}
+
+/* 底部固定操作栏 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 20;
+}
+
+.bottom-bar-spacer {
+  height: 86px;
+}
+
+/* 差异高亮 */
+.diff-row {
+  background: #fff1f0 !important;
+}
+
+.text-danger {
+  color: var(--wms-danger);
+  font-weight: 600;
+}
+
+.text-success {
+  color: var(--wms-success);
+  font-weight: 600;
+}
+
+.text-weak {
+  color: var(--wms-text-weak);
+  font-size: 12px;
+}
+
+/* 数据时间戳页脚（PRD 5.3.1 要求标注数据时间） */
+.sync-footer {
+  text-align: center;
+  color: var(--wms-text-weak);
+  font-size: 12px;
+  padding: 14px 0 8px;
+}

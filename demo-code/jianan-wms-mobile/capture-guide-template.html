@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>简岸门店 WMS · 实操指南（图解版 v2）</title>
+<style>
+body{font-family:system-ui,'PingFang SC','Microsoft YaHei',sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#323233;line-height:1.7;background:#fafbfc}
+h1{font-size:24px} h2{font-size:20px;border-left:4px solid #1989fa;padding-left:10px;margin-top:44px} h3{font-size:16px;margin-top:28px}
+table{border-collapse:collapse;width:100%;font-size:13px;background:#fff} td,th{border:1px solid #e5e6eb;padding:6px 10px;text-align:left} th{background:#f2f3f5}
+figure{margin:14px 0;text-align:center} figure img{max-width:300px;width:100%;border:1px solid #e5e6eb;border-radius:12px}
+figcaption{font-size:12px;color:#969799;margin-top:6px}
+.scen{background:#fff;border:1px solid #e5e6eb;border-radius:12px;padding:16px 20px;margin:18px 0}
+.tag{display:inline-block;background:#e8f3ff;color:#1989fa;font-size:12px;border-radius:6px;padding:1px 8px;margin-right:6px}
+.warn{background:#fff7ee;border:1px solid #f0c78a;border-radius:8px;padding:10px 14px;font-size:13px}
+.motto{background:#f0f9eb;border:1px solid #b3e19d;border-radius:8px;padding:10px 14px;font-size:13px}
+</style>
+</head>
+<body>
+<h1>简岸门店 WMS · 实操指南（图解版 v2）</h1>
+<p style="color:#B42318;font-weight:600;font-size:13px;margin:6px 0 0">📌 红框 = 重点标注（截图对应 Demo v0.4.8，2026-10-27 实机重截）</p>
+<p><span class="tag">对应 Demo v0.4.8</span><span class="tag">47 张实机截图</span><span class="tag">按业务事件组织</span><br>
+文字版见同目录 <b>简岸门店WMS-实操指南.md</b>（v1.2）。每张截图均为真实操作过程中的页面状态。</p>
+<div class="warn"><b>开跑前 3 分钟</b>：npm run dev → http://localhost:5173 ｜ 纯前端 Mock，刷新=库存/单据复位 ｜ 「我的→重置演示数据」一键全清 ｜ 所有"扫码"都是<b>点按钮</b>——点一下 = 扫码枪过一件货；盘点页另有<b>连扫模式</b>（逐件自动累加，货架上有几件就扫得出几件）。演示条码是<b>确定性轮换</b>。</div>
+<p><b>产品一句话</b>：给服装连锁门店用的库存手机工作台——进货、盘点、调拨、退货四个动作全部"扫码即记账"，账本每次变动都有单据可追溯。</p>
+
+<h2>一、角色与一天的时序</h2>
+<pre>09:30 快递到店 → 剧本A 进货入库（店员）　 账本：可售 ↑
+11:00 总部调拨到 → 剧本C 调拨收货（店员）　账本：在途 → 可售
+14:00 顾客来退货 → 剧本D 退换货（店员/店长）账本：可售 ↑ 或 次品 ↑
+21:30 打烊 ────→ 剧本B 盘点（店长）　　　 账本：账实校准</pre>
+<div class="motto"><b>核心心智模型</b>：库存账四个口袋——可售 / 在途 / 次品 / 待清理挂账。所有操作只是把件数在口袋间搬动或进出，每次搬动留一张单据（守恒）。</div>
+
+<h2>二、剧本 A：进货入库（店员，最高频）</h2>
+<div class="scen">
+<p><b>场景</b>：供应商货车到店。整箱多 SKU 走收货单核点；零散几件走快捷扫码。两条链路的差异口径完全一致。</p>
+<figure><img src="{{IMG:01-home}}" alt="首页看板：6 格待办 + 今日概况"><figcaption>首页看板：6 格待办 + 今日概况（含「待确认差异」位）</figcaption></figure><figure><img src="{{IMG:02-functions}}" alt="功能页：一级功能入口"><figcaption>功能页：一级功能入口</figcaption></figure><figure><img src="{{IMG:03-receipt-list}}" alt="收货单列表：2 张待收货单"><figcaption>收货单列表：2 张待收货单（应收件数 / 箱数）</figcaption></figure><figure><img src="{{IMG:04-receipt-detail}}" alt="收货详情：箱码列表"><figcaption>收货详情：箱码列表（1001/1002 预置已扫，1003 待扫）</figcaption></figure><figure><img src="{{IMG:05-receipt-scanned}}" alt="全部箱扫完：可点确认入库"><figcaption>全部箱扫完：可点「确认入库」</figcaption></figure><figure><img src="{{IMG:06-receipt-unknown}}" alt="扫一条错误箱码后：挂入未匹配条码待处理清单"><figcaption>扫一条错误箱码后：挂入未匹配条码待处理清单（不静默丢弃）</figcaption></figure>
+<p><b>跟着跑 A-1（含差异挂账）</b>：功能页 → 收货单 → 点开 ASN20261019001 → 点箱码标签扫 1003 → 试「扫一条错误箱码（演示）」→ <b>把第三箱实点从 6 改成 5</b>（行内变红「数量不符」）→ 确认入库 → <b>按实点入 5 件，差额 1 件生成 CY 差异单挂账</b>。</p>
+<figure><img src="{{IMG:07-receipt-diff-step}}" alt="第三箱实点 6→5：数量不符"><figcaption>第三箱实点 6→5：行内红色「数量不符」，差异 -1</figcaption></figure><figure><img src="{{IMG:08-receipt-diff-dialog}}" alt="确认入库弹窗：将生成差异单"><figcaption>确认入库弹窗：提示将生成差异单，可「稍后处理」直达差异页</figcaption></figure><figure><img src="{{IMG:09-receipt-diffs}}" alt="收货差异页：CY 单待确认"><figcaption>收货差异页：CY 单待确认（送货单 6 · 实点 5，-1 件）</figcaption></figure><figure><img src="{{IMG:10-home-diff}}" alt="首页联动：待确认差异亮 1"><figcaption>首页联动：「待确认差异」亮 1，点击直达差异页</figcaption></figure><figure><img src="{{IMG:11-receipt-diffs-confirmed}}" alt="确认差异：已确认留痕"><figcaption>点「确认差异」：已确认留痕（与供应商核实后挂账追偿）</figcaption></figure>
+<p><b>跟着跑 A-2（快捷扫码）</b>：功能页大按钮 → 扫码出商品卡 → 把实收改成 ≠ 应收 → 确认入库 → <b>差额同样生成 CY 差异单</b>（toast 带单号，首页 +1）。</p>
+<figure><img src="{{IMG:12-receipt-scan}}" alt="快捷扫码入库：商品卡 + 应收数"><figcaption>快捷扫码入库：扫出商品卡 + 送货单应收数</figcaption></figure><figure><img src="{{IMG:13-scan-diff-toast}}" alt="快捷差额入库：toast 带差异单号"><figcaption>快捷差额确认入库：toast 带差异单号——两条入库链路差异口径一致</figcaption></figure>
+<div class="motto"><b>这条链在保护什么</b>：按实点入库（送10实点8 → 入8挂2，账上不出现纸面货——面试词：账实分离，差异挂账）；未登记条码三原则——不静默丢弃、同码去重累加、不自动追认入账。</div>
+</div>
+
+<h2>三、剧本 P：未匹配条码分件处置（店长，v0.4.8）</h2>
+<div class="scen">
+<p><b>场景</b>：同一条码扫了 2 次（×2 累加），但店长核实后只有 1 件是真异常——<b>逐条留痕，件数不丢失</b>（PRD 3.7）。</p>
+<figure><img src="{{IMG:14-pending-x2}}" alt="未登记条码 ×2：同码累加"><figcaption>未登记条码 ×2：同码去重累加，每条可独立「处置」</figcaption></figure><figure><img src="{{IMG:15-pending-dispose-sheet}}" alt="处置方式选择"><figcaption>点「处置」：四选一（纠正/追认/回补等，店长人工决定）</figcaption></figure><figure><img src="{{IMG:16-pending-dispose-dialog}}" alt="分件处置：选数量"><figcaption>×N 条目先选处置件数：未处置的留在原条目继续待核实</figcaption></figure><figure><img src="{{IMG:17-pending-split}}" alt="拆分完成：已纠正留痕 + 剩余待核实"><figcaption>拆分完成：已纠正 1 条独立留痕，剩余 1 件继续待核实</figcaption></figure><figure><img src="{{IMG:18-pending-closed}}" alt="全部处置闭环"><figcaption>剩余 1 件处置后：该码全部闭环，全程留痕</figcaption></figure>
+<div class="motto"><b>在保护什么</b>：不自动追认入账——每一条异常都必须经店长人工处置；×N 打包处置会丢件数，所以按件拆分留痕；48h 未核实自动升级提醒总部。</div>
+</div>
+
+<h2>四、剧本 B：盘点（店长，唯一的账实校准器）</h2>
+<div class="scen">
+<p><b>场景</b>：月末全店大盘（3 小时→10 分钟）；或怀疑某几个款有差异想复核。<b>账本平时靠事件记账，盘点是唯一的"校准器"</b>——它不听账本说什么，而是重新数一遍货架。</p>
+<figure><img src="{{IMG:36-stocktake-task}}" alt="盘点任务页：7/12 预置已盘"><figcaption>盘点任务页：进度 7/12（预置部分已盘）；<b>此时没有「重新开单」按钮——它只在上轮盘点完成后才出现</b></figcaption></figure><figure><img src="{{IMG:37-stocktake-batching}}" alt="连扫进行中：数字实时跳动"><figcaption>点「连扫模式（模拟扫码枪连发）」：逐件自动累加，清单数字实时跳动——就像扫码枪沿货架连发</figcaption></figure><figure><img src="{{IMG:38-stocktake-full}}" alt="连扫完成 12/12"><figcaption>连扫完成 12/12：toast 提示本轮连扫件数，扫完自动停（扫满再扫会提示"已扫不出更多"）</figcaption></figure>
+<p><b>跟着跑 B-1（全店盘 + 对账 + 盘平）</b>：扫码盘点 → 连扫补完剩余 5 款 → 结束盘点 → 覆盖率 100%、<b>盘亏 2 / 盘盈 1</b>（预埋真实货差剧情，每条附人话归因）→ 确认差异落账（生成 TZ 调整单）→ 回盘点页「重新开单」→ 再连扫一轮 → <b>盘平 0/0</b>——账实校准后差异源消失，不该每轮都亏同一件。</p>
+<figure><img src="{{IMG:39-result-100}}" alt="对账页：100% 覆盖率，-2/+1"><figcaption>对账页（覆盖率 100%）：盘亏 2 / 盘盈 1，差异明细 + 人话归因（灰色"归因依据"默认折叠）</figcaption></figure><figure><img src="{{IMG:40-reopen-btn}}" alt="落账后：重新开单按钮出现"><figcaption>落账后回盘点页：「重新开单」按钮此时才出现</figcaption></figure><figure><img src="{{IMG:41-reopen-dialog}}" alt="重新开单确认弹窗"><figcaption>重新开单确认弹窗：旧照片作废需二次确认</figcaption></figure><figure><img src="{{IMG:42-result-flat}}" alt="第二轮全盘：盘平 0/0"><figcaption>第二轮全盘：盘平 0/0 无差异——落账 = 账实校准，差异源消失（想再看差异剧情：我的 → 重置演示数据）</figcaption></figure>
+<p><b>跟着跑 B-2（故意触发护栏 + 驳回）</b>：重新开单 → 连点 3 次「扫码盘点」（可能都落在同一款）→ 结束盘点 → 覆盖率仅 8%（1/12）、-2 盘亏，黄条提示"未盘的不会被修改" → 确认差异 → <b>强制弹窗</b>〔驳回重盘〕〔我知悉，仍要确认〕→ 点驳回：结果作废、库存不动、<b>已盘记录保留，状态自动回「盘点中」，回去直接继续扫</b>（v0.4.6）。</p>
+<figure><img src="{{IMG:43-result-partial}}" alt="半盘对账：覆盖率 8%"><figcaption>半盘对账：覆盖率 8%（1/12）、-2 盘亏——未盘 ≠ 盘亏，只对已盘 SKU 出差异（诚实减法）</figcaption></figure><figure><img src="{{IMG:44-guard-dialog}}" alt="落账护栏弹窗"><figcaption>v0.4.1 落账护栏：没盘完的结果没资格被静默确认——〔驳回重盘〕〔我知悉，仍要确认〕</figcaption></figure><figure><img src="{{IMG:45-stocktake-resumed}}" alt="驳回后：状态回盘点中"><figcaption>驳回后回盘点页：状态「盘点中」、已盘保留、按钮可点——同一轮补扫，不重冻快照</figcaption></figure>
+<div class="motto"><b>这条链在保护什么</b>：三层模型（账本 ≠ 货架实况 ≠ 扫码计数——系统绝不按账本"补齐"实盘，那是抄答案）｜冻结快照（对账只跟开单那刻的照片比）｜盲盘（防照本凑数）｜未盘 ≠ 盘亏｜落账护栏（防"半轮盘点一键砍账"）｜重新开单 = 新一轮（面试金句：照片是给账本此刻的样子留证）｜连扫 = 扫码枪连发的替身（真实门店靠扫码枪每秒 3~5 次连发或 RFID，快但不作弊）。</div>
+<div class="warn">每日结业小盘 = PRD 5.2.3 快速盘点（范围选择，覆盖率分母=范围内 SKU），<b>尚未实现</b>——面试可主动讲规划。</div>
+</div>
+
+<h2>五、剧本 C：调拨收货（店员，门店间移货）</h2>
+<div class="scen">
+<figure><img src="{{IMG:19-transfer-list}}" alt="调拨列表"><figcaption>调拨列表：我发出的 / 我接收的</figcaption></figure><figure><img src="{{IMG:20-transfer-detail}}" alt="调入单点货"><figcaption>点开 DB20261017002（银泰→我，已签收）：明细 2 个 SKU 共 5 件，逐件扫描点货</figcaption></figure><figure><img src="{{IMG:21-transfer-scanned}}" alt="5 件扫满"><figcaption>连点 5 次扫满：每点 1 次记 1 件（少扫几件也可以，按钮变「确认收货（差额挂账入库）」）</figcaption></figure><figure><img src="{{IMG:22-transfer-done}}" alt="确认收货并入库"><figcaption>确认收货并入库：实到几件入几件可售、应到减在途、差额进挂账科目</figcaption></figure>
+<div class="motto"><b>这条链在保护什么</b>：签收即入库（单据状态与记账解耦，差异不阻塞入库——v2.2 重画状态机的根因）；守恒——有差时 可售+实到、在途-应到、挂账+差额，合计仍不变。</div>
+</div>
+
+<h2>六、剧本 D：顾客退货 + 次品处理（店员/店长）</h2>
+<div class="scen">
+<p><b>场景</b>：连衣裙吊牌完好 → 入回可售；衬衫包装破损 → 归次品；小票丢了 → 人工录入待复核。演示扫码按固定顺序轮换：①连衣裙有原单 ②衬衫有原单 ③大衣查无原单 ④开衫有原单。</p>
+<figure><img src="{{IMG:23-returns-home}}" alt="退换货主页"><figcaption>退换货主页：验退入口 + 待复核角标 + 今日记录</figcaption></figure><figure><img src="{{IMG:24-return-matched}}" alt="扫码验退：反查原销售单"><figcaption>第 1 扫：反查原销售单成功（原单号/批次/购买时间）——退货必须挂原单，杜绝"随便入回哪个款"</figcaption></figure><figure><img src="{{IMG:25-return-done}}" alt="入回原库存：TH 退货单回执"><figcaption>选"吊牌完好"入回原库存：TH 退货单回执，一退一进两笔事件留痕</figcaption></figure><figure><img src="{{IMG:26-return-defective}}" alt="第 2 扫：破损归次品"><figcaption>第 2 扫选"破损或已拆封"：归次品，自动生成一条次品登记（CP 单）</figcaption></figure><figure><img src="{{IMG:27-return-manual}}" alt="第 3 扫查无原单：人工录入（商品按条码自动填入）"><figcaption>第 3 扫查无原单 → 人工录入：<b>退货商品已按条码自动识别填入</b>（条码即商品，改选需二次确认）；先试不勾待复核提交</figcaption></figure><figure><img src="{{IMG:28-return-blocked}}" alt="不勾待复核被拦截"><figcaption>不勾「标记待复核」直接提交：<b>被拦截</b>（数据层强校验）——无原单不拦账但必须留复核痕迹</figcaption></figure><figure><img src="{{IMG:29-return-review}}" alt="待复核清单"><figcaption>待复核清单：RV 单 + 补录原单入口</figcaption></figure><figure><img src="{{IMG:30-return-review-done}}" alt="补录原单后已复核"><figcaption>补录原单后：状态已复核、留痕"已补原单 XS…"</figcaption></figure>
+<p><b>次品处理（店长）</b>：次品登记 → 浮动＋登记（原因必填；口径 = 可售划入次品，守恒内部转移）→ 待处理条目点「促销处理」→ 已促销处理留痕、次品账扣减。</p>
+<figure><img src="{{IMG:31-defective-list}}" alt="次品登记页"><figcaption>次品登记：汇总头（待处理/已促销）+ 列表 + 处理留痕 + 浮动＋</figcaption></figure><figure><img src="{{IMG:32-defective-blocked}}" alt="留空原因被拦"><figcaption>留空原因提交：被拦「原因必填」</figcaption></figure><figure><img src="{{IMG:33-defective-register}}" alt="选 SKU 填原因确认登记"><figcaption>选 SKU + 填原因：确认登记（手工登记 = 可售划入次品，合计不变；退货归次品 = 外部流入，合计 +N——两种来源科目方向不同）</figcaption></figure><figure><img src="{{IMG:35-defective-promoted}}" alt="促销处理完成"><figcaption>促销处理（总部季度低价清货）：状态 + 留痕，次品账同步扣减</figcaption></figure>
+<div class="motto"><b>这条链在保护什么</b>：验退反查杜绝入错款｜吊牌破损强制进次品不能回流可售｜无原单不拦账但强制留复核痕迹（24h 补原单解除）｜次品账独立可对接总部促销。</div>
+</div>
+
+<h2>七、剧本 E：数据查看（店长每天打开第一眼）</h2>
+<div class="scen">
+<figure><img src="{{IMG:46-inventory}}" alt="实时库存：四科目"><figcaption>实时库存：四科目全表（可售/在途/次品/挂账），支持按科目筛选</figcaption></figure><figure><img src="{{IMG:47-profile}}" alt="我的：版本号 + 重置演示数据"><figcaption>我的：版本号 + 重置演示数据入口</figcaption></figure>
+<p>首页 6 格待办点击直达（任何数据 ≤2 次点击）；差异单 → 首页「待确认差异」直达；未匹配条码 → 各页共用的待处理清单入口。</p>
+</div>
+
+<h2>八、面试串联（30 秒）</h2>
+<div class="motto">"这是一家服装连锁门店的库存工作台。进货扫码按实点入库，差异挂账不拦账；调拨签收即入库，差额进挂账科目；退货扫码反查原销售单，吊牌完好回可售、破损归次品、无原单先入账再待复核；盘点是唯一校准器——开单冻结快照、盲盘计数、自动对账归因、店长确认才落账，没盘完有护栏拦着。库存四科目守恒，每次变动有单据号可追溯。"</div>
+<p class="warn" style="margin-top:20px"><b>已知缺口（主动说，比被问出来强）</b>：① 快速盘点（5.2.3 每日小盘）未实现 ② 数据为 Mock 内存态，刷新复位（持久化的只有条码待处理清单与退货待复核清单）③ 对账页店员引导未上页面。配套：简岸门店WMS-demo面试问答卡.md（6 问）。</p>
+</body></html>
