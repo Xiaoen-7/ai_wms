@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: demo-code/jianan-wms-mobile/package-lock.json
+
+      - name: 安装依赖
+        working-directory: demo-code/jianan-wms-mobile
+        run: npm ci
+
+      - name: 构建（Pages 是子路径，base 指向 /ai_wms/）
+        working-directory: demo-code/jianan-wms-mobile
+        run: npm run build -- --base=/ai_wms/
+
+      - name: 收走构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo-code/jianan-wms-mobile/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
